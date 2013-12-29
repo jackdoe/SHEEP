@@ -20,7 +20,8 @@ SYNOPSIS
       # find top 10 documents containing 'doe' in the name field
       my $r = $x->search({ term => { name => 'doe' } }, 10); 
 
-      # find top 10 documents containing 'doe' in the name, AND 200 in the 'age' field
+      # find top 10 documents containing 'doe' in the name,
+      # AND 200 in the 'age' field
       my $r = $x->search({ term => { name => 'doe', age => '200' } }, 10); 
 
       # some bool query examples:
@@ -39,7 +40,7 @@ SYNOPSIS
                     bool => {
                         must => [
                            { term => { "name" => 'jack' } }
-                        ],
+                         ],
                         must_not => [
                            { term => { "name" => 'jack' } }
                         ]
@@ -93,7 +94,7 @@ SEE ALSO
     <https://github.com/jackdoe/SHEEP>
 
 AUTHOR
-    Borislav Nikolov <jack@sofialondonmoskva.com<gt>
+    Borislav Nikolov <jack@sofialondonmoskva.com>
 
 COPYRIGHT AND LICENSE
     Copyright (C) 2013 by Borislav Nikolov

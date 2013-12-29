@@ -58,7 +58,8 @@ SHEEP - simple CLucene wrapper that spawns threads for every shard when search()
   # find top 10 documents containing 'doe' in the name field
   my $r = $x->search({ term => { name => 'doe' } }, 10); 
 
-  # find top 10 documents containing 'doe' in the name, AND 200 in the 'age' field
+  # find top 10 documents containing 'doe' in the name,
+  # AND 200 in the 'age' field
   my $r = $x->search({ term => { name => 'doe', age => '200' } }, 10); 
 
   # some bool query examples:
@@ -77,7 +78,7 @@ SHEEP - simple CLucene wrapper that spawns threads for every shard when search()
                 bool => {
                     must => [
                        { term => { "name" => 'jack' } }
-                    ],
+                     ],
                     must_not => [
                        { term => { "name" => 'jack' } }
                     ]
@@ -134,7 +135,7 @@ L<https://github.com/jackdoe/SHEEP>
 
 =head1 AUTHOR
 
-Borislav Nikolov E<lt>jack@sofialondonmoskva.com<gt>
+Borislav Nikolov <jack@sofialondonmoskva.com>
 
 =head1 COPYRIGHT AND LICENSE
 
