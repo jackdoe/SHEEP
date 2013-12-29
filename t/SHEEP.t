@@ -8,11 +8,12 @@
 use strict;
 use warnings;
 use Data::Dumper;
-use Test::More;
 use File::Temp;
 use File::Path qw(make_path);
 use File::Spec;
 use utf8;
+use Test::More;
+
 BEGIN { use_ok('SHEEP') };
 
 my $root = File::Temp->newdir( 'ZZZ_SHEEP_test_index_ZZZ_XXXX', CLEANUP => 1 );
@@ -22,10 +23,10 @@ my $x = new SHEEP($root,$shards);
 my @documents = ();
 
 push @documents, { "name" => "jack doe 杰克 多伊", age => "200" }
-    for(1 .. 1_000);
+    for(1 .. 1_0000);
 
 push @documents, { "name" => "john doe ", age => "300" }
-    for(1 .. 1_000);
+    for(1 .. 1_0000);
 
 my $n = scalar(@documents);
 

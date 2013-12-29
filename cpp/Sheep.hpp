@@ -21,7 +21,7 @@ public:
     string root;
     int shards;
     int counter;
-
+    lucene::analysis::WhitespaceAnalyzer an;
     Sheep(char * _root, int _shards) {
         this->root = string(_root);
         this->shards = _shards;
@@ -55,18 +55,25 @@ public:
         }
 
         AV *ret = newAV();
+        Document::FieldsType::const_iterator fit;
+        const Document::FieldsType* fields;
+
         for (shard = 0; shard < this->shards; shard++) {
             t[shard].join();
             for (size_t i = 0; i < std::min((size_t )n,hits[shard]->length()); i++ ){
                 Document* doc = &hits[shard]->doc(i);
-                DocumentFieldEnumeration *fields = doc->fields();
+                fields = doc->getFields();
                 HV *item = newHV();
-                while (Field *f = fields->nextElement()) {
+                fit = fields->begin();
+                while (fit != fields->end()) {
+                    Field* field = *fit;
                     SV *f_val = newSV(0);
                     SV *f_name = newSV(0);
-                    WCharToSv(f->name(),f_name);
-                    WCharToSv((const TCHAR *)f->stringValue(),f_val);
+                    WCharToSv(field->name(),f_name);
+                    WCharToSv((const TCHAR *)field->stringValue(),f_val);
                     hv_store_ent(item,f_name,f_val,0);
+
+                    fit++;
                 }
                 av_push(ret,newRV((SV *)item));
             }
@@ -75,6 +82,7 @@ public:
         for (shard = 0; shard < this->shards; shard++) {
             searchers[shard]->close();
             _CLLDELETE(searchers[shard]);
+            _CLLDELETE(hits[shard]);
         }
 
         _CLLDELETE(q);
@@ -84,11 +92,11 @@ public:
     int index(AV *docs) {
         int i,inserted = 0;
         try {
-            lucene::analysis::WhitespaceAnalyzer an;
             IndexWriter *writers[this->shards];
             for (i = 0; i < this->shards; i++) {
-                bool should_create = IndexReader::indexExists(this->fs_shard_path(i)) ? false : true;
-                FSDirectory *dir = FSDirectory::getDirectory(this->fs_shard_path(i),should_create,NULL);
+                const char *path = this->fs_shard_path(i);
+                bool should_create = IndexReader::indexExists(path) ? false : true;
+                FSDirectory *dir = FSDirectory::getDirectory(path,should_create,NULL);
                 writers[i] = _CLNEW IndexWriter(dir ,&an, should_create);
                 writers[i]->setUseCompoundFile(false);
             }

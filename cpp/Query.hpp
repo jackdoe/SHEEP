@@ -48,9 +48,9 @@ BooleanQuery *add_query(BooleanQuery *parent, SV *query, BooleanClause::Occur oc
                 wchar_t *w_key = CharToWChar(0,(U8 *) t_key,len);
                 wchar_t *w_val = SvToWChar(t_val);
                 Term *t = _CLNEW Term(w_key, w_val);
+                parent->add(_CLNEW TermQuery(t),true,occur);
                 Safefree(w_key);
                 Safefree(w_val);
-                parent->add(_CLNEW TermQuery(t),occur);
             }
         } else if (strncmp("bool",key,len) == 0) {
             SV **pp_should = hv_fetch(h_val,"should",6,0);
@@ -61,14 +61,14 @@ BooleanQuery *add_query(BooleanQuery *parent, SV *query, BooleanClause::Occur oc
             if (PP_IS_NOT_AREF(pp_should) || PP_IS_NOT_AREF(pp_must) || PP_IS_NOT_AREF(pp_must_not))
                 die("bool query expects { must => [], should => [], must_not => [] }");
 
-            BooleanQuery *b = new BooleanQuery();
+            BooleanQuery *b = _CLNEW BooleanQuery();
             if (pp_should)
                 add_queries_from_ar(b,*pp_should,BooleanClause::SHOULD);
             if (pp_must)
                 add_queries_from_ar(b,*pp_must,BooleanClause::MUST);
             if (pp_must_not)
                 add_queries_from_ar(b,*pp_must_not,BooleanClause::MUST_NOT);
-            parent->add(b,occur);
+            parent->add(b,true,occur);
         } else {
             die("dont know what to do with: %s",key);
         }
