@@ -35,6 +35,9 @@ XSLoader::load('SHEEP', $VERSION);
 1;
 __END__
 # Below is stub documentation for your module. You'd better edit it!
+=head1 ALPHA - WORK IN PROGRESS
+
+*alpha* not recommended for anything but hacking on some simple CLucene examples
 
 =head1 NAME
 

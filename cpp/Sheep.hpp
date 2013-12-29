@@ -57,7 +57,6 @@ public:
         AV *ret = newAV();
         for (shard = 0; shard < this->shards; shard++) {
             t[shard].join();
-//            die("AAA: %d",hits[shard]->length());
             for (size_t i = 0; i < std::min((size_t )n,hits[shard]->length()); i++ ){
                 Document* doc = &hits[shard]->doc(i);
                 DocumentFieldEnumeration *fields = doc->fields();

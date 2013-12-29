@@ -1,5 +1,6 @@
-
-    * WARNING: ALPHA (even pre-pre-alpha) *
+ALPHA - WORK IN PROGRESS
+    *alpha* not recommended for anything but hacking on some simple CLucene
+    examples
 
 NAME
     SHEEP - simple CLucene wrapper that spawns threads for every shard when
