@@ -28,12 +28,8 @@ public:
         this->counter = 0;
     }
 
-    ~Sheep() { std::cout << "Destruction is a way of life for me.\n"; }
+    ~Sheep() { }
 
-    void foo(int &i) {
-        i++;
-    }
-    
     const char * fs_shard_path(int i) {
         fs::path dir (this->root);
         fs::path file (boost::lexical_cast<string>(i));
