@@ -1,3 +1,6 @@
+
+    * WARNING: ALPHA (even pre-pre-alpha) *
+
 NAME
     SHEEP - simple CLucene wrapper that spawns threads for every shard when
     search()ing
