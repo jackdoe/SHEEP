@@ -78,7 +78,7 @@ SHEEP - simple CLucene wrapper that spawns threads for every shard when search()
                 bool => {
                     must => [
                        { term => { "name" => 'jack' } }
-                     ],
+                    ],
                     must_not => [
                        { term => { "name" => 'jack' } }
                     ]

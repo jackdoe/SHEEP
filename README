@@ -40,7 +40,7 @@ SYNOPSIS
                     bool => {
                         must => [
                            { term => { "name" => 'jack' } }
-                         ],
+                        ],
                         must_not => [
                            { term => { "name" => 'jack' } }
                         ]
