@@ -75,6 +75,7 @@ public:
 
                     fit++;
                 }
+                hv_store(item,"_score",6, newSVnv(hits[shard]->score(i)),0);
                 av_push(ret,newRV((SV *)item));
             }
         }

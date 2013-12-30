@@ -22,7 +22,7 @@ my $shards = 10;
 my $x = new SHEEP($root,$shards);
 my @documents = ();
 
-push @documents, { "name" => "jack doe 杰克 多伊", age => "200" }
+push @documents, { "name" => "jack doe 杰克 多伊", age => "200", something => "nothing" }
     for(1 .. 1_0000);
 
 push @documents, { "name" => "john doe ", age => "300" }
@@ -33,6 +33,9 @@ my $n = scalar(@documents);
 is ($x->index(\@documents), $n,"should be " . $n);
 
 my $utf = $x->search({ term => { name => '杰克' } },1);
+is ($utf->[0]->{name}, "jack doe 杰克 多伊");
+my $utf_with_age = $x->search({ term => { name => '杰克', age => '200' } },1);
+cmp_ok ($utf_with_age->[0]->{_score},'>',$utf->[0]->{_score});
 is ($utf->[0]->{name}, "jack doe 杰克 多伊");
 is (scalar(@{ $x->search({ term => { name => 'doe' } },$n) }), $n);
 is (scalar(@{ $x->search({ term => { name => '杰克' } },$n) }), $n / 2);

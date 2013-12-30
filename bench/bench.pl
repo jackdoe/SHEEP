@@ -16,6 +16,7 @@ for my $n((100_000,1_000_000)) {
         for(1 .. $n);
 }
 $x->index(\@documents);
+@documents = ();
 
 timethese(1_000, {
     '100_000' => sub {

@@ -1,6 +1,6 @@
 *~
-XS.bs
-XS.c
+SHEEP.bs
+SHEEP.c
 *.o
 .#
 MYMETA.json
