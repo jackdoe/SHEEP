@@ -51,6 +51,7 @@ BooleanQuery *add_query(BooleanQuery *parent, SV *query, BooleanClause::Occur oc
                 parent->add(_CLNEW TermQuery(t),true,occur);
                 Safefree(w_key);
                 Safefree(w_val);
+                _CLDECDELETE(t);
             }
         } else if (strncmp("bool",key,len) == 0) {
             SV **pp_should = hv_fetch(h_val,"should",6,0);

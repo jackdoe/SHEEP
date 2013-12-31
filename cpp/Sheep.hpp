@@ -14,52 +14,73 @@ using namespace lucene::util;
 using namespace lucene::store;
 using namespace lucene::document;
 using namespace std;
-
+#define MAX_SHARDS 128
 
 class Sheep {
 public:
     string root;
     int shards;
     int counter;
+    FSDirectory *directories[MAX_SHARDS];
     lucene::analysis::WhitespaceAnalyzer an;
+
     Sheep(char * _root, int _shards) {
+        if (_shards >= MAX_SHARDS)
+            die("%d > MAX_SHARDS(%d)",_shards,MAX_SHARDS);
+
         this->root = string(_root);
         this->shards = _shards;
         this->counter = 0;
+        int shard;
+        for (shard = 0; shard < this->shards; shard++) {
+            fs::path dir(this->root);
+            dir /= (boost::lexical_cast<string>(shard));
+            directories[shard] = FSDirectory::getDirectory(dir.c_str(), false, NULL);
+        }
     }
 
-    ~Sheep() { }
-
-    const char * fs_shard_path(int i) {
-        fs::path dir (this->root);
-        fs::path file (boost::lexical_cast<string>(i));
-        fs::path full_path = dir / file;
-        return full_path.c_str();
+    ~Sheep() {
+        int shard;
+        for (shard = 0; shard < this->shards; shard++) {
+            if (this->directories[shard]) {
+                this->directories[shard]->close();
+                _CLLDELETE(this->directories[shard]);
+            }
+        }
     }
 
     void _search_into(Query *q, IndexSearcher *s, Hits **h) {
-        *h = s->search(q);
+        try {
+            *h = s->search(q);
+        } catch (CLuceneError& e) {
+            std::cout << e.what();
+            *h = NULL;
+        }
     }
 
     SV *search(SV *query, int n) {
         BooleanQuery *q = _CLNEW BooleanQuery();
         add_query(q,query,BooleanClause::MUST);
-
-        boost::thread t[this->shards];
         IndexSearcher *searchers[this->shards];
+        boost::thread t[this->shards];
         Hits *hits[this->shards];
-        int shard;
-        for (shard = 0; shard < this->shards; shard++) {
-            searchers[shard] = _CLNEW IndexSearcher(FSDirectory::getDirectory(this->fs_shard_path(shard)));
-            t[shard] = boost::thread(&Sheep::_search_into, this, q,boost::ref(searchers[shard]),&hits[shard]);
-        }
-
-        AV *ret = newAV();
         Document::FieldsType::const_iterator fit;
         const Document::FieldsType* fields;
+        int shard;
+
+        AV *ret = newAV();
+        for (shard = 0; shard < this->shards; shard++) {
+            searchers[shard] = _CLNEW IndexSearcher(directories[shard]);
+            t[shard] = boost::thread(&Sheep::_search_into, this, q,searchers[shard],&hits[shard]);
+        }
 
         for (shard = 0; shard < this->shards; shard++) {
             t[shard].join();
+
+            if (!hits[shard]) {
+                av_undef(ret);
+                die("search error: look at %s:%d, there should also be an error in stdout",__FILE__,__LINE__);
+            }
             for (size_t i = 0; i < std::min((size_t )n,hits[shard]->length()); i++ ){
                 Document* doc = &hits[shard]->doc(i);
                 fields = doc->getFields();
@@ -76,35 +97,30 @@ public:
                     fit++;
                 }
                 hv_store(item,"_score",6, newSVnv(hits[shard]->score(i)),0);
-                av_push(ret,newRV((SV *)item));
+                av_push(ret,newRV_noinc((SV *)item));
             }
-        }
-
-        for (shard = 0; shard < this->shards; shard++) {
+            _CLLDELETE(hits[shard]);
             searchers[shard]->close();
             _CLLDELETE(searchers[shard]);
-            _CLLDELETE(hits[shard]);
         }
 
         _CLLDELETE(q);
-        return newRV((SV *)ret);
+        return newRV_noinc((SV *)ret);
     }
 
     int index(AV *docs) {
-        int i,inserted = 0;
+        int i,inserted = 0, shard;
         try {
             IndexWriter *writers[this->shards];
-            for (i = 0; i < this->shards; i++) {
-                const char *path = this->fs_shard_path(i);
-                bool should_create = IndexReader::indexExists(path) ? false : true;
-                FSDirectory *dir = FSDirectory::getDirectory(path,should_create,NULL);
-                writers[i] = _CLNEW IndexWriter(dir ,&an, should_create);
-                writers[i]->setUseCompoundFile(false);
+            for (shard = 0; shard < this->shards; shard++) {
+                bool should_create = IndexReader::indexExists(this->directories[shard]) ? false : true;
+                writers[shard] = _CLNEW IndexWriter(this->directories[shard],&an, should_create);
+                writers[shard]->setUseCompoundFile(false);
             }
 
             Document doc;
             HE *he;
-            for (i=0; i<=av_len(docs); i++) {
+            for (i=0; i<= av_len(docs); i++) {
                 SV** elem = av_fetch(docs, i, 0);
                 if (elem == NULL || *elem == &PL_sv_undef || !SvROK(*elem) || (SvTYPE(SvRV(*elem)) != SVt_PVHV) )
                     continue;
@@ -117,19 +133,18 @@ public:
                     SV *val = hv_iterval(hv,he);
                     wchar_t *w_key = CharToWChar(0,(U8 *) key,len);
                     wchar_t *w_val = SvToWChar(val);
-                    doc.add( *_CLNEW Field(w_key, w_val, Field::STORE_YES | Field::INDEX_TOKENIZED) );
+                    doc.add(*_CLNEW Field(w_key, w_val, Field::STORE_YES | Field::INDEX_TOKENIZED) );
                     Safefree(w_key);
                     Safefree(w_val);
                 }
                 writers[this->counter++ % this->shards]->addDocument( &doc );
                 inserted++;
             }
-
-            for (i = 0; i < this->shards; i++) {
-                writers[i]->setUseCompoundFile(true);
-                writers[i]->optimize();
-                writers[i]->close();
-                _CLLDELETE(writers[i]);
+            for (shard = 0; shard < this->shards; shard++) {
+                writers[shard]->setUseCompoundFile(true);
+                writers[shard]->optimize();
+                writers[shard]->close();
+                _CLLDELETE(writers[shard]);
             }
         } catch (CLuceneError& e) {
             die(e.what());

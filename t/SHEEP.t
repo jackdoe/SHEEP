@@ -37,8 +37,7 @@ is ($utf->[0]->{name}, "jack doe 杰克 多伊");
 my $utf_with_age = $x->search({ term => { name => '杰克', age => '200' } },1);
 cmp_ok ($utf_with_age->[0]->{_score},'>',$utf->[0]->{_score});
 is ($utf->[0]->{name}, "jack doe 杰克 多伊");
-is (scalar(@{ $x->search({ term => { name => 'doe' } },$n) }), $n);
-is (scalar(@{ $x->search({ term => { name => '杰克' } },$n) }), $n / 2);
+is (scalar(@{ $x->search({ term => { name => 'doe' } },$n) }), $n);is (scalar(@{ $x->search({ term => { name => '杰克' } },$n) }), $n / 2);
 is (scalar(@{ $x->search({ term => { name => 'doe', age => '200' } },$n) }), $n / 2);
 is (scalar(@{ $x->search({ term => { name => 'doe', age => '10' } },$n) }), 0);
 is (scalar(@{ $x->search({ term => { name => 'doe' } },10) }), 10 * $shards);
@@ -104,6 +103,7 @@ is (scalar(@{ $x->search({
 is ($x->index(\@documents), $n,"should be " . $n);
 is (scalar(@{ $x->search({ term => { name => 'doe' } },$n) }), $n * 2, "after adding $n more documents");
 is (scalar(@{ $x->search({ term => { name => 'doe' } },10) }), 10 * $shards);
+undef $x;
 
 done_testing;
 #########################

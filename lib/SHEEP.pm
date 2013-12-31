@@ -54,6 +54,7 @@ SHEEP - simple CLucene wrapper that spawns threads for every shard when search()
 
   push @documents, { "name" => "john doe", age => "300" }
       for(1 .. 1_000);
+  $x->index(\@documents);
 
   # find top 10 documents containing 'doe' in the name field
   my $r = $x->search({ term => { name => 'doe' } }, 10); 

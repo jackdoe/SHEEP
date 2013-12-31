@@ -3,8 +3,6 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Temp;
-use File::Spec;
-use utf8;
 use SHEEP;
 my $root = File::Temp->newdir( 'ZZZ_SHEEP_bench_index_ZZZ_XXXX', CLEANUP => 1 );
 my $shards = 10;
@@ -27,3 +25,4 @@ timethese(1_000, {
     }
 });
 
+undef $x;
